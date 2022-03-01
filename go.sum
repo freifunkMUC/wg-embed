@@ -124,5 +124,5 @@ golang.zx2c4.com/wireguard v0.0.0-20211129173154-2dd424e2d808 h1:rdIdofxHfxUJ3rQ
 golang.zx2c4.com/wireguard v0.0.0-20211129173154-2dd424e2d808/go.mod h1:TjUWrnD5ATh7bFvmm/ALEJZQ4ivKbETb6pmyj1vUoNI=
 golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211207222515-92d582e4e166 h1:Wgph/iQUE6jV//ctg7LeNxlsAbxHlhXDBVA1c2zXkN0=
 golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211207222515-92d582e4e166/go.mod h1:ELrVb7MHNIb8OV6iZ6TP/ScunqUha+vWsUP+SVBH7lQ=
-gopkg.in/ini.v1 v1.66.3 h1:jRskFVxYaMGAMUbN0UZ7niA9gzL9B49DOqE78vg0k3w=
-gopkg.in/ini.v1 v1.66.3/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
+gopkg.in/ini.v1 v1.66.4 h1:SsAcf+mM7mRZo2nJNGt8mZCjG8ZRaNGMURJw7BsIST4=
+gopkg.in/ini.v1 v1.66.4/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
