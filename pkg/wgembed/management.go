@@ -12,7 +12,7 @@ import (
 // AddPeer adds a new peer to the interface.
 // The subnet sizes in addressCIDR should be /32 for IPv4 and /128 for IPv6,
 // as the whole subnet will be added to AllowedIPs for this device.
-func (wg *WireGuardInterfaceImpl) AddPeer(publicKey string, addressCIDR []string) error {
+func (wg *commonInterface) AddPeer(publicKey string, addressCIDR []string) error {
 	key, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
 		return errors.Wrapf(err, "bad public key %v", publicKey)
@@ -40,7 +40,7 @@ func (wg *WireGuardInterfaceImpl) AddPeer(publicKey string, addressCIDR []string
 	})
 }
 
-func (wg *WireGuardInterfaceImpl) ListPeers() ([]wgtypes.Peer, error) {
+func (wg *commonInterface) ListPeers() ([]wgtypes.Peer, error) {
 	device, err := wg.Device()
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (wg *WireGuardInterfaceImpl) ListPeers() ([]wgtypes.Peer, error) {
 	return device.Peers, nil
 }
 
-func (wg *WireGuardInterfaceImpl) RemovePeer(publicKey string) error {
+func (wg *commonInterface) RemovePeer(publicKey string) error {
 	key, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
 		return errors.Wrap(err, "bad public key")
@@ -65,7 +65,7 @@ func (wg *WireGuardInterfaceImpl) RemovePeer(publicKey string) error {
 	})
 }
 
-func (wg *WireGuardInterfaceImpl) HasPeer(publicKey string) bool {
+func (wg *commonInterface) HasPeer(publicKey string) bool {
 	peers, err := wg.ListPeers()
 	if err != nil {
 		logrus.Error(errors.Wrap(err, "failed to list peers"))
@@ -79,7 +79,7 @@ func (wg *WireGuardInterfaceImpl) HasPeer(publicKey string) bool {
 	return false
 }
 
-func (wg *WireGuardInterfaceImpl) Peer(publicKey string) (*wgtypes.Peer, error) {
+func (wg *commonInterface) Peer(publicKey string) (*wgtypes.Peer, error) {
 	peers, err := wg.ListPeers()
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (wg *WireGuardInterfaceImpl) Peer(publicKey string) (*wgtypes.Peer, error) 
 }
 
 // PublicKey returns the currently configured wireguard public key
-func (wg *WireGuardInterfaceImpl) PublicKey() (string, error) {
+func (wg *commonInterface) PublicKey() (string, error) {
 	device, err := wg.Device()
 	if err != nil {
 		return "", err
@@ -101,7 +101,7 @@ func (wg *WireGuardInterfaceImpl) PublicKey() (string, error) {
 	return device.PublicKey.String(), nil
 }
 
-func (wg *WireGuardInterfaceImpl) Port() (int, error) {
+func (wg *commonInterface) Port() (int, error) {
 	device, err := wg.Device()
 	if err != nil {
 		return 0, err
@@ -109,7 +109,7 @@ func (wg *WireGuardInterfaceImpl) Port() (int, error) {
 	return device.ListenPort, nil
 }
 
-func (wg *WireGuardInterfaceImpl) configure(cb func(*wgtypes.Config) error) error {
+func (wg *commonInterface) configure(cb func(*wgtypes.Config) error) error {
 	// TODO: concurrency
 	// s.lock.Lock()
 	// defer s.lock.Unlock()

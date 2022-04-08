@@ -3,13 +3,20 @@
 
 package wgembed
 
-import "log"
+import (
+	"github.com/sirupsen/logrus"
+)
 
-func (wg *WireGuardInterfaceImpl) Up() error {
-	log.Println("wg.Up() is a no-op on macos")
+func NewWithOpts(opts Options) (WireGuardInterface, error) {
+	logrus.Debug("creating new userspace wireguard-go interface")
+	return newUserspaceInterface(opts.InterfaceName)
+}
+
+func (wg *commonInterface) Up() error {
+	logrus.Println("wg.Up() is a no-op on macos")
 	return nil
 }
 
-func (wg *WireGuardInterfaceImpl) setIP(ip string) error {
+func (wg *commonInterface) setIP(ip string) error {
 	return nil
 }

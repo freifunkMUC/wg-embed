@@ -9,7 +9,24 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func (wg *WireGuardInterfaceImpl) Up() error {
+// NewWithOpts creates a new network interface, needs to be enabled with WireGuardInterface.Up() afterwards.
+// opts.Name is require and must be set to a unique interface name
+func NewWithOpts(opts Options) (WireGuardInterface, error) {
+	if opts.AllowKernelModule {
+		logrus.Debug("creating new kernel interface")
+		wg, err := newKernelInterface(opts.InterfaceName)
+		if err != nil {
+			logrus.Info(errors.Wrap(err, "falling back to embedded Go implementation"))
+		} else {
+			return wg, nil
+		}
+	}
+	logrus.Debug("creating new userspace wireguard-go interface")
+	return newUserspaceInterface(opts.InterfaceName)
+}
+
+// Up activates an existing interface created with New() or NewWithOpts()
+func (wg *commonInterface) Up() error {
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
 		return errors.Wrap(err, "failed to find wireguard interface")
@@ -23,12 +40,12 @@ func (wg *WireGuardInterfaceImpl) Up() error {
 		return errors.Wrap(err, "failed to set wireguard mtu")
 	}
 
-	logrus.Debug("set interface up")
+	logrus.Debug("interface set up successfully")
 
 	return nil
 }
 
-func (wg *WireGuardInterfaceImpl) setIP(ip string) error {
+func (wg *commonInterface) setIP(ip string) error {
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
 		return errors.Wrap(err, "failed to find wireguard interface")
