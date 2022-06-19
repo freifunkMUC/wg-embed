@@ -76,14 +76,14 @@ func (c *ConfigFile) load() error {
 		return errors.Wrap(err, "bad private key")
 	}
 
-	peers := []wgtypes.PeerConfig{}
+	peers := make([]wgtypes.PeerConfig, 0, len(c.Peers))
 	for _, peer := range c.Peers {
 		key, err := wgtypes.ParseKey(peer.PublicKey)
 		if err != nil {
 			return errors.Wrap(err, "bad public key")
 		}
 
-		allowedIPs := []net.IPNet{}
+		allowedIPs := make([]net.IPNet, 0, len(peer.AllowedIPs))
 		for _, ip := range peer.AllowedIPs {
 			_, ipnet, err := net.ParseCIDR(ip)
 			if err != nil {
