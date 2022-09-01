@@ -74,7 +74,7 @@ golang.zx2c4.com/wireguard v0.0.0-20220601130007-6a08d81f6bc4/go.mod h1:bVQfyl2s
 golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b h1:9JncmKXcUwE918my+H6xmjBdhK2jM/UTUNXxhRG1BAk=
 golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b/go.mod h1:yp4gl6zOlnDGOZeWeDfMwQcsdOIQnMdhuPx9mwwWBL4=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/ini.v1 v1.66.6 h1:LATuAqN/shcYAOkv3wl2L4rkaKqkcgTBQjOyYDvcPKI=
-gopkg.in/ini.v1 v1.66.6/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
+gopkg.in/ini.v1 v1.67.0 h1:Dgnx+6+nfE+IfzjUEISNeydPJh9AXNNsWbGP9KzCsOA=
+gopkg.in/ini.v1 v1.67.0/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=

@@ -8,7 +8,7 @@ require (
 	github.com/vishvananda/netlink v1.1.0
 	golang.zx2c4.com/wireguard v0.0.0-20220601130007-6a08d81f6bc4
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	gopkg.in/ini.v1 v1.66.6
+	gopkg.in/ini.v1 v1.67.0
 )
 
 require (
