@@ -32,3 +32,7 @@ func (wg *NoOpWireguardInterface) PublicKey() (string, error) {
 func (wg *NoOpWireguardInterface) Close() error {
 	return nil
 }
+
+func (wg *NoOpWireguardInterface) Ping() error {
+	return nil
+}

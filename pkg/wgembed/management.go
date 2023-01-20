@@ -109,6 +109,13 @@ func (wg *commonInterface) Port() (int, error) {
 	return device.ListenPort, nil
 }
 
+func (wg *commonInterface) Ping() error {
+	if _, err := wg.ListPeers(); err != nil {
+		return errors.New("failed to ping wireguard")
+	}
+	return nil
+}
+
 func (wg *commonInterface) configure(cb func(*wgtypes.Config) error) error {
 	// TODO: concurrency
 	// s.lock.Lock()

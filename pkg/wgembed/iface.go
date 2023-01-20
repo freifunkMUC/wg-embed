@@ -13,6 +13,7 @@ type WireGuardInterface interface {
 	RemovePeer(publicKey string) error
 	PublicKey() (string, error)
 	Close() error
+	Ping() error
 }
 
 // Options contains configuration options for the interface
