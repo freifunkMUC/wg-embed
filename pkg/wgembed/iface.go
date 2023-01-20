@@ -8,7 +8,7 @@ import (
 
 type WireGuardInterface interface {
 	LoadConfig(config *ConfigFile) error
-	AddPeer(publicKey string, addressCIDR []string) error
+	AddPeer(publicKey string, presharedKey string, addressCIDR []string) error
 	ListPeers() ([]wgtypes.Peer, error)
 	RemovePeer(publicKey string) error
 	PublicKey() (string, error)

@@ -12,10 +12,21 @@ import (
 // AddPeer adds a new peer to the interface.
 // The subnet sizes in addressCIDR should be /32 for IPv4 and /128 for IPv6,
 // as the whole subnet will be added to AllowedIPs for this device.
-func (wg *commonInterface) AddPeer(publicKey string, addressCIDR []string) error {
-	key, err := wgtypes.ParseKey(publicKey)
+// The presharedKey is optinal and can be omitted with nil
+func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string) error {
+	wgPublicKey, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
 		return errors.Wrapf(err, "bad public key %v", publicKey)
+	}
+
+	var wgPresharedKey *wgtypes.Key
+	if len(presharedKey) != 0 {
+		psk, err := wgtypes.ParseKey(presharedKey)
+		if err != nil {
+			logrus.WithError(err).Warnf("ignoring bad pre-shared key: %v", presharedKey)
+		} else {
+			wgPresharedKey = &psk
+		}
 	}
 
 	parsedAddresses := make([]net.IPNet, 0, len(addressCIDR))
@@ -31,7 +42,8 @@ func (wg *commonInterface) AddPeer(publicKey string, addressCIDR []string) error
 		config.ReplacePeers = false
 		config.Peers = []wgtypes.PeerConfig{
 			{
-				PublicKey:         key,
+				PublicKey:         wgPublicKey,
+				PresharedKey:      wgPresharedKey,
 				AllowedIPs:        parsedAddresses,
 				ReplaceAllowedIPs: true,
 			},
