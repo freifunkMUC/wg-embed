@@ -1,4 +1,4 @@
-module github.com/freifunkMUC/wg-embed
+module github.com/inventage/wg-embed
 
 go 1.17
 
