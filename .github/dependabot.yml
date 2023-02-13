@@ -6,5 +6,5 @@ updates:
   - package-ecosystem: gomod
     directory: /
     schedule: {interval: monthly}
-    reviewers: [inventage/wg-access-server]
-    assignees: [inventage/wg-access-server]
+    reviewers: [freifunkMUC/wg-access-server]
+    assignees: [freifunkMUC/wg-access-server]
