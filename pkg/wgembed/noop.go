@@ -13,7 +13,7 @@ func (wg *NoOpWireguardInterface) LoadConfig(config *ConfigFile) error {
 	return nil
 }
 
-func (wg *NoOpWireguardInterface) AddPeer(publicKey string, addressCIDR []string) error {
+func (wg *NoOpWireguardInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string) error {
 	return nil
 }
 
@@ -30,5 +30,9 @@ func (wg *NoOpWireguardInterface) PublicKey() (string, error) {
 }
 
 func (wg *NoOpWireguardInterface) Close() error {
+	return nil
+}
+
+func (wg *NoOpWireguardInterface) Ping() error {
 	return nil
 }
