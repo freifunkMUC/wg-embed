@@ -22,6 +22,7 @@ type IfaceConfig struct {
 	Address    []string
 	ListenPort *int
 	DNS        []string
+	MTU        *int
 }
 
 type PeerConfig struct {
