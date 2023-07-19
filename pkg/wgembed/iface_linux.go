@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+	"golang.zx2c4.com/wireguard/device"
 )
 
 // NewWithOpts creates a new network interface, needs to be enabled with WireGuardInterface.Up() afterwards.
@@ -36,7 +37,11 @@ func (wg *commonInterface) Up() error {
 		return errors.Wrap(err, "failed to bring wireguard interface up")
 	}
 
-	if err := netlink.LinkSetMTU(link, 1420); err != nil {
+	MTU := device.DefaultMTU
+	if wg.config.Interface.MTU != nil {
+		MTU = *wg.config.Interface.MTU
+	}
+	if err := netlink.LinkSetMTU(link, MTU); err != nil {
 		return errors.Wrap(err, "failed to set wireguard mtu")
 	}
 
