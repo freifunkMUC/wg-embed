@@ -3,6 +3,7 @@ package wgembed
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -13,7 +14,7 @@ import (
 // The subnet sizes in addressCIDR should be /32 for IPv4 and /128 for IPv6,
 // as the whole subnet will be added to AllowedIPs for this device.
 // The presharedKey is optinal and can be omitted with nil
-func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string) error {
+func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string, endpoint string, persistentKeepaliveInterval int32) error {
 	wgPublicKey, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
 		return errors.Wrapf(err, "bad public key %v", publicKey)
@@ -40,12 +41,16 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 
 	return wg.configure(func(config *wgtypes.Config) error {
 		config.ReplacePeers = false
+		udpEndpoint, _ := net.ResolveUDPAddr("tcp", endpoint)
+		persistentKeepaliveInterval := time.Duration(persistentKeepaliveInterval) * time.Second
 		config.Peers = []wgtypes.PeerConfig{
 			{
-				PublicKey:         wgPublicKey,
-				PresharedKey:      wgPresharedKey,
-				AllowedIPs:        parsedAddresses,
-				ReplaceAllowedIPs: true,
+				PublicKey:                   wgPublicKey,
+				PresharedKey:                wgPresharedKey,
+				AllowedIPs:                  parsedAddresses,
+				ReplaceAllowedIPs:           true,
+				Endpoint:                    udpEndpoint,
+				PersistentKeepaliveInterval: &persistentKeepaliveInterval,
 			},
 		}
 		return nil
