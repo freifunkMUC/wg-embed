@@ -39,10 +39,15 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 		parsedAddresses = append(parsedAddresses, *allowedIPs)
 	}
 
+	udpEndpoint, _ := net.ResolveUDPAddr("udp", endpoint)
+	// Avoid configuration failure due to being unable to evaluate the provided host
+	if udpEndpoint.String() == ":0" {
+		udpEndpoint = nil
+	}
+	persistentKeepaliveIntervalDuration := time.Duration(persistentKeepaliveInterval) * time.Second
+
 	return wg.configure(func(config *wgtypes.Config) error {
 		config.ReplacePeers = false
-		udpEndpoint, _ := net.ResolveUDPAddr("tcp", endpoint)
-		persistentKeepaliveInterval := time.Duration(persistentKeepaliveInterval) * time.Second
 		config.Peers = []wgtypes.PeerConfig{
 			{
 				PublicKey:                   wgPublicKey,
@@ -50,7 +55,7 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 				AllowedIPs:                  parsedAddresses,
 				ReplaceAllowedIPs:           true,
 				Endpoint:                    udpEndpoint,
-				PersistentKeepaliveInterval: &persistentKeepaliveInterval,
+				PersistentKeepaliveInterval: &persistentKeepaliveIntervalDuration,
 			},
 		}
 		return nil
