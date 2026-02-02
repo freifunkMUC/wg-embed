@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/vishvananda/netlink v1.3.1
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
