@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.25', '1.26' ]
+        go: [ '1.26', '1.27' ]
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -27,5 +27,20 @@ jobs:
     - name: Build
       run: go build -v ./...
 
+    - name: Build for other platforms
+      run: |
+        GOOS=darwin go build ./...
+        GOOS=windows go build ./...
+
     - name: Test
-      run: go test -v ./...
+      run: go test -race -v ./...
+
+    # Creating network interfaces needs CAP_NET_ADMIN and /dev/net/tun. Run
+    # those tests in a container that has both instead of as root on the runner.
+    - name: Test interfaces
+      run: |
+        docker run --rm --cap-add NET_ADMIN --device /dev/net/tun \
+          -v "$PWD":/src -v "$(go env GOMODCACHE)":/go/pkg/mod -w /src \
+          -e WGEMBED_TEST_NETADMIN=1 -e GOTOOLCHAIN=local \
+          golang:${{ matrix.go }}-bookworm \
+          go test -race -v ./...

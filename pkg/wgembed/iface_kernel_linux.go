@@ -31,6 +31,8 @@ func newKernelInterface(interfaceName string) (WireGuardInterface, error) {
 
 	client, err := wgctrl.New()
 	if err != nil {
+		// remove the device just created, or the next start fails on its name
+		_ = netlink.LinkDel(link)
 		return nil, errors.Wrap(err, "failed to create wg client")
 	}
 
@@ -47,6 +49,11 @@ func newKernelInterface(interfaceName string) (WireGuardInterface, error) {
 // Close will stop and clean up both the wireguard
 // interface and userspace configuration api
 func (wg *kernelInterface) Close() error {
+	wg.closeOnce.Do(func() { wg.closeErr = wg.close() })
+	return wg.closeErr
+}
+
+func (wg *kernelInterface) close() error {
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
 		return err
