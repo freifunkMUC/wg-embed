@@ -13,6 +13,7 @@ package wgembed
 import (
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/pkg/errors"
 	"golang.zx2c4.com/wireguard/conn"
@@ -26,8 +27,9 @@ import (
 // network interface
 type userspaceInterface struct {
 	commonInterface
-	device *device.Device
-	uapi   net.Listener
+	device   *device.Device
+	uapi     net.Listener
+	uapiFile *os.File
 }
 
 func newUserspaceInterface(interfaceName string) (WireGuardInterface, error) {
@@ -41,35 +43,46 @@ func newUserspaceInterface(interfaceName string) (WireGuardInterface, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create wg client")
 	}
-	wg.client = client
 
 	tunDevice, err := tun.CreateTUN(wg.name, device.DefaultMTU)
 	if err != nil {
+		_ = client.Close()
 		return nil, errors.Wrap(err, "failed to create TUN device")
 	}
 
 	// open UAPI file (or use supplied fd)
 	fileUAPI, err := ipc.UAPIOpen(wg.name)
 	if err != nil {
+		_ = tunDevice.Close()
+		_ = client.Close()
 		return nil, errors.Wrap(err, "UAPI listen error")
 	}
 
 	logger := device.NewLogger(device.LogLevelError, fmt.Sprintf("(%s) ", interfaceName))
+	// from here on the device owns tunDevice and closes it
 	wg.device = device.NewDevice(tunDevice, conn.NewDefaultBind(), logger)
-
-	errs := make(chan error)
 
 	uapi, err := ipc.UAPIListen(wg.name, fileUAPI)
 	if err != nil {
+		_ = fileUAPI.Close()
+		wg.device.Close()
+		_ = client.Close()
 		return nil, errors.Wrap(err, "failed to listen on uapi socket")
 	}
+	wg.client = client
 	wg.uapi = uapi
+	// UAPIListen works on its own copy of the descriptor (net.FileListener),
+	// so ours has to be closed as well - but only in Close, after the
+	// listener. Closing it right here made wireguard-go's watcher on the socket
+	// path shut down its cancel pipe, and closing the listener later failed
+	// with "file already closed".
+	wg.uapiFile = fileUAPI
 
 	go func() {
 		for {
 			connection, err := uapi.Accept()
 			if err != nil {
-				errs <- err
+				// the listener was closed; nothing is left to serve
 				return
 			}
 			go wg.device.IpcHandle(connection)
@@ -86,12 +99,18 @@ func (wg *userspaceInterface) Wait() chan struct{} {
 }
 
 // Close will stop and clean up both the wireguard
-// interface and userspace configuration api
+// interface and userspace configuration api. It always releases everything,
+// even when one step fails, and calling it again is a no-op.
 func (wg *userspaceInterface) Close() error {
-	if err := wg.uapi.Close(); err != nil {
-		return err
-	}
-	wg.device.Close()
-	wg.client.Close()
-	return nil
+	wg.closeOnce.Do(func() {
+		wg.closeErr = wg.uapi.Close()
+		if err := wg.uapiFile.Close(); err != nil && wg.closeErr == nil {
+			wg.closeErr = err
+		}
+		wg.device.Close()
+		if err := wg.client.Close(); err != nil && wg.closeErr == nil {
+			wg.closeErr = err
+		}
+	})
+	return wg.closeErr
 }

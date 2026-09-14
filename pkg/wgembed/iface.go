@@ -1,10 +1,17 @@
 package wgembed
 
 import (
+	"sync"
+
 	"github.com/pkg/errors"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
+
+// ErrInterfaceExists is returned by NewWithOpts when a network interface with
+// the requested name already exists. It is typically left over from a previous
+// run that was killed before it could remove its interface.
+var ErrInterfaceExists = errors.New("network interface already exists")
 
 type WireGuardInterface interface {
 	LoadConfig(config *ConfigFile) error
@@ -36,6 +43,9 @@ type commonInterface struct {
 	name   string
 	client *wgctrl.Client
 	config *ConfigFile
+
+	closeOnce sync.Once
+	closeErr  error
 }
 
 // LoadConfigFile reads the given wireguard config file
