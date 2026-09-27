@@ -46,6 +46,17 @@ Two things it deliberately does not do:
 
 Linux only - elsewhere the option does nothing.
 
+## Secrets
+
+The private key of an interface is secret and the library treats it that way:
+
+- `ConfigFile.String()` renders everything but the private key, so a
+  configuration can be logged or printed with `%v` without leaking it.
+- `ReadConfig` warns when the file it reads may be read by anyone but its owner.
+- A pre-shared key that cannot be parsed is an error, never a log line - and
+  never silently dropped, which used to leave the peer without the key the
+  caller asked for.
+
 ## Tests
 
 Tests that create interfaces need `CAP_NET_ADMIN` and `/dev/net/tun`. Run them in a
