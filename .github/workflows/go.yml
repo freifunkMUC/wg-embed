@@ -35,6 +35,12 @@ jobs:
     - name: Test
       run: go test -race -v ./...
 
+    # Known vulnerabilities in the dependencies and in the standard library
+    # this is built with. It reports only what the code actually reaches.
+    - name: Vulnerabilities
+      run: |
+        go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
     # Creating network interfaces needs CAP_NET_ADMIN and /dev/net/tun. Run
     # those tests in a container that has both instead of as root on the runner.
     - name: Test interfaces
