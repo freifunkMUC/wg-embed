@@ -15,7 +15,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/pkg/errors"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
@@ -42,13 +41,13 @@ func newUserspaceInterface(opts Options) (WireGuardInterface, error) {
 
 	client, err := wgctrl.New()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create wg client")
+		return nil, fmt.Errorf("failed to create wg client: %w", err)
 	}
 
 	tunDevice, err := tun.CreateTUN(wg.name, device.DefaultMTU)
 	if err != nil {
 		_ = client.Close()
-		return nil, errors.Wrap(err, "failed to create TUN device")
+		return nil, fmt.Errorf("failed to create TUN device: %w", err)
 	}
 
 	// open UAPI file (or use supplied fd)
@@ -56,7 +55,7 @@ func newUserspaceInterface(opts Options) (WireGuardInterface, error) {
 	if err != nil {
 		_ = tunDevice.Close()
 		_ = client.Close()
-		return nil, errors.Wrap(err, "UAPI listen error")
+		return nil, fmt.Errorf("UAPI listen error: %w", err)
 	}
 
 	logger := device.NewLogger(device.LogLevelError, fmt.Sprintf("(%s) ", wg.name))
@@ -68,7 +67,7 @@ func newUserspaceInterface(opts Options) (WireGuardInterface, error) {
 		_ = fileUAPI.Close()
 		wg.device.Close()
 		_ = client.Close()
-		return nil, errors.Wrap(err, "failed to listen on uapi socket")
+		return nil, fmt.Errorf("failed to listen on uapi socket: %w", err)
 	}
 	wg.client = client
 	wg.uapi = uapi

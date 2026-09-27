@@ -1,11 +1,11 @@
 package wgembed
 
 import (
-	"io/ioutil"
+	"fmt"
 	"net"
+	"os"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/ini.v1"
@@ -40,9 +40,9 @@ func ReadConfig(path string) (*ConfigFile, error) {
 		Peers: []PeerConfig{},
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read wireguard config file")
+		return nil, fmt.Errorf("failed to read wireguard config file: %w", err)
 	}
 
 	if err := opts.parse(bytes); err != nil {
@@ -60,12 +60,12 @@ func (c *ConfigFile) parse(config []byte) error {
 	opt := ini.LoadOptions{AllowNonUniqueSections: true}
 	f, err := ini.LoadSources(opt, config)
 	if err != nil {
-		return errors.Wrap(err, "failed to read wireguard config file")
+		return fmt.Errorf("failed to read wireguard config file: %w", err)
 	}
 
 	err = f.MapTo(c)
 	if err != nil {
-		return errors.Wrap(err, "failed to map wireguard config file")
+		return fmt.Errorf("failed to map wireguard config file: %w", err)
 	}
 
 	return nil
@@ -74,21 +74,21 @@ func (c *ConfigFile) parse(config []byte) error {
 func (c *ConfigFile) load() error {
 	privateKey, err := wgtypes.ParseKey(c.Interface.PrivateKey)
 	if err != nil {
-		return errors.Wrap(err, "bad private key")
+		return fmt.Errorf("bad private key: %w", err)
 	}
 
 	peers := make([]wgtypes.PeerConfig, 0, len(c.Peers))
 	for _, peer := range c.Peers {
 		key, err := wgtypes.ParseKey(peer.PublicKey)
 		if err != nil {
-			return errors.Wrap(err, "bad public key")
+			return fmt.Errorf("bad public key: %w", err)
 		}
 
 		allowedIPs := make([]net.IPNet, 0, len(peer.AllowedIPs))
 		for _, ip := range peer.AllowedIPs {
 			_, ipnet, err := net.ParseCIDR(ip)
 			if err != nil {
-				return errors.Wrapf(err, "bad allowed ip: %s", ip)
+				return fmt.Errorf("bad allowed ip: %s: %w", ip, err)
 			}
 			allowedIPs = append(allowedIPs, *ipnet)
 		}
@@ -97,7 +97,7 @@ func (c *ConfigFile) load() error {
 		if peer.Endpoint != nil {
 			udpaddr, err := net.ResolveUDPAddr("udp", *peer.Endpoint)
 			if err != nil {
-				return errors.Wrap(err, "failed to parse endpoint address")
+				return fmt.Errorf("failed to parse endpoint address: %w", err)
 			}
 			endpoint = udpaddr
 		}

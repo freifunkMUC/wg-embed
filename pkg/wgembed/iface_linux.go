@@ -6,7 +6,6 @@ package wgembed
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/device"
@@ -35,7 +34,7 @@ func NewWithOpts(opts Options) (WireGuardInterface, error) {
 			return wg, nil
 		}
 		kernelErr = err
-		logrus.Info(errors.Wrap(err, "falling back to embedded Go implementation"))
+		logrus.Info(fmt.Errorf("falling back to embedded Go implementation: %w", err))
 	}
 
 	logrus.Debug("creating new userspace wireguard-go interface")
@@ -54,11 +53,11 @@ func NewWithOpts(opts Options) (WireGuardInterface, error) {
 func (wg *commonInterface) Up() error {
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
-		return errors.Wrap(err, "failed to find wireguard interface")
+		return fmt.Errorf("failed to find wireguard interface: %w", err)
 	}
 
 	if err := netlink.LinkSetUp(link); err != nil {
-		return errors.Wrap(err, "failed to bring wireguard interface up")
+		return fmt.Errorf("failed to bring wireguard interface up: %w", err)
 	}
 
 	MTU := device.DefaultMTU
@@ -66,7 +65,7 @@ func (wg *commonInterface) Up() error {
 		MTU = *wg.config.Interface.MTU
 	}
 	if err := netlink.LinkSetMTU(link, MTU); err != nil {
-		return errors.Wrap(err, "failed to set wireguard mtu")
+		return fmt.Errorf("failed to set wireguard mtu: %w", err)
 	}
 
 	logrus.Debug("interface set up successfully")
@@ -77,16 +76,16 @@ func (wg *commonInterface) Up() error {
 func (wg *commonInterface) setIP(ip string) error {
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
-		return errors.Wrap(err, "failed to find wireguard interface")
+		return fmt.Errorf("failed to find wireguard interface: %w", err)
 	}
 
 	linkaddr, err := netlink.ParseAddr(ip)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse wireguard interface ip address")
+		return fmt.Errorf("failed to parse wireguard interface ip address: %w", err)
 	}
 
 	if err := netlink.AddrAdd(link, linkaddr); err != nil {
-		return errors.Wrap(err, "failed to set ip address of wireguard interface")
+		return fmt.Errorf("failed to set ip address of wireguard interface: %w", err)
 	}
 
 	return nil

@@ -1,10 +1,10 @@
 package wgembed
 
 import (
+	"errors"
 	"fmt"
 	"net"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -16,7 +16,7 @@ import (
 func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string) error {
 	wgPublicKey, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
-		return errors.Wrapf(err, "bad public key %v", publicKey)
+		return fmt.Errorf("bad public key %v: %w", publicKey, err)
 	}
 
 	var wgPresharedKey *wgtypes.Key
@@ -32,8 +32,13 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 	parsedAddresses := make([]net.IPNet, 0, len(addressCIDR))
 	for _, addr := range addressCIDR {
 		_, allowedIPs, err := net.ParseCIDR(addr)
-		if err != nil || allowedIPs == nil {
-			return errors.Wrap(err, "bad CIDR value for AllowedIPs")
+		if err != nil {
+			return fmt.Errorf("bad CIDR value for AllowedIPs %q: %w", addr, err)
+		}
+		// Wrapping a nil error used to make this return nil - the address was
+		// then dropped and the caller was told the peer had been added with it.
+		if allowedIPs == nil {
+			return fmt.Errorf("bad CIDR value for AllowedIPs %q", addr)
 		}
 		parsedAddresses = append(parsedAddresses, *allowedIPs)
 	}
@@ -69,7 +74,7 @@ func (wg *commonInterface) ListPeers() ([]wgtypes.Peer, error) {
 func (wg *commonInterface) RemovePeer(publicKey string) error {
 	key, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
-		return errors.Wrap(err, "bad public key")
+		return fmt.Errorf("bad public key: %w", err)
 	}
 	if err := wg.configure(func(config *wgtypes.Config) error {
 		config.ReplacePeers = false
@@ -91,7 +96,7 @@ func (wg *commonInterface) RemovePeer(publicKey string) error {
 func (wg *commonInterface) HasPeer(publicKey string) bool {
 	peers, err := wg.ListPeers()
 	if err != nil {
-		logrus.Error(errors.Wrap(err, "failed to list peers"))
+		logrus.Error(fmt.Errorf("failed to list peers: %w", err))
 		return false
 	}
 	for _, peer := range peers {
@@ -145,7 +150,7 @@ func (wg *commonInterface) configure(cb func(*wgtypes.Config) error) error {
 	// defer s.lock.Unlock()
 	next := wgtypes.Config{}
 	if err := cb(&next); err != nil {
-		return errors.Wrap(err, "failed to get next wireguard config")
+		return fmt.Errorf("failed to get next wireguard config: %w", err)
 	}
 	return wg.client.ConfigureDevice(wg.Name(), next)
 }
