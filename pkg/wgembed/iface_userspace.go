@@ -32,10 +32,11 @@ type userspaceInterface struct {
 	uapiFile *os.File
 }
 
-func newUserspaceInterface(interfaceName string) (WireGuardInterface, error) {
+func newUserspaceInterface(opts Options) (WireGuardInterface, error) {
 	wg := &userspaceInterface{
 		commonInterface: commonInterface{
-			name: interfaceName,
+			name:         opts.InterfaceName,
+			manageRoutes: opts.ManageRoutes,
 		},
 	}
 
@@ -58,7 +59,7 @@ func newUserspaceInterface(interfaceName string) (WireGuardInterface, error) {
 		return nil, errors.Wrap(err, "UAPI listen error")
 	}
 
-	logger := device.NewLogger(device.LogLevelError, fmt.Sprintf("(%s) ", interfaceName))
+	logger := device.NewLogger(device.LogLevelError, fmt.Sprintf("(%s) ", wg.name))
 	// from here on the device owns tunDevice and closes it
 	wg.device = device.NewDevice(tunDevice, conn.NewDefaultBind(), logger)
 

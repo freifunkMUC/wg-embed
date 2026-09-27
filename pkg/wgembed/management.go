@@ -38,7 +38,7 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 		parsedAddresses = append(parsedAddresses, *allowedIPs)
 	}
 
-	return wg.configure(func(config *wgtypes.Config) error {
+	if err := wg.configure(func(config *wgtypes.Config) error {
 		config.ReplacePeers = false
 		config.Peers = []wgtypes.PeerConfig{
 			{
@@ -49,7 +49,13 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 			},
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// The peer may be allowed to use a network that is not the interface's
+	// own: without a route the kernel would never send anything there.
+	return wg.syncRoutes()
 }
 
 func (wg *commonInterface) ListPeers() ([]wgtypes.Peer, error) {
@@ -65,7 +71,7 @@ func (wg *commonInterface) RemovePeer(publicKey string) error {
 	if err != nil {
 		return errors.Wrap(err, "bad public key")
 	}
-	return wg.configure(func(config *wgtypes.Config) error {
+	if err := wg.configure(func(config *wgtypes.Config) error {
 		config.ReplacePeers = false
 		config.Peers = []wgtypes.PeerConfig{
 			{
@@ -74,7 +80,12 @@ func (wg *commonInterface) RemovePeer(publicKey string) error {
 			},
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Whatever was routed here for this peer alone goes with it.
+	return wg.syncRoutes()
 }
 
 func (wg *commonInterface) HasPeer(publicKey string) bool {

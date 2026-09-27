@@ -30,7 +30,7 @@ func NewWithOpts(opts Options) (WireGuardInterface, error) {
 	var kernelErr error
 	if opts.AllowKernelModule {
 		logrus.Debug("creating new kernel interface")
-		wg, err := newKernelInterface(opts.InterfaceName)
+		wg, err := newKernelInterface(opts)
 		if err == nil {
 			return wg, nil
 		}
@@ -39,7 +39,7 @@ func NewWithOpts(opts Options) (WireGuardInterface, error) {
 	}
 
 	logrus.Debug("creating new userspace wireguard-go interface")
-	wg, err := newUserspaceInterface(opts.InterfaceName)
+	wg, err := newUserspaceInterface(opts)
 	if err != nil {
 		if kernelErr != nil {
 			// the kernel error is usually the more telling one, so keep both

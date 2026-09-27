@@ -30,12 +30,24 @@ type Options struct {
 	// AllowKernelModule enables the usage of the WireGuard kernel module.
 	// Falls back to userspace if creation fails. No effect on Windows or Darwin
 	AllowKernelModule bool
+	// ManageRoutes keeps the kernel routing table in line with what the peers
+	// are allowed to send: every network in a peer's allowed IPs that the
+	// interface's own addresses do not already reach gets a route to this
+	// interface, the way wg-quick's "Table = auto" does it. Without it a peer
+	// may be allowed to use a network the kernel never sends anything to.
+	//
+	// Only the routes it added itself are ever removed again, so a route set
+	// up by hand or by a lifecycle command stays. A default route is never
+	// added: on a server that would send its own traffic into the tunnel.
+	//
+	// Linux only; elsewhere it does nothing.
+	ManageRoutes bool
 }
 
 // New creates a wireguard interface and starts the userspace
 // wireguard configuration api
 func New(interfaceName string) (WireGuardInterface, error) {
-	return newUserspaceInterface(interfaceName)
+	return newUserspaceInterface(Options{InterfaceName: interfaceName})
 }
 
 // commonInterface holds fields that are common across all wgctrl-controlled implementations
@@ -43,6 +55,14 @@ type commonInterface struct {
 	name   string
 	client *wgctrl.Client
 	config *ConfigFile
+
+	// manageRoutes is Options.ManageRoutes; routes holds the networks this
+	// interface has a route for, so that only those are removed again. The
+	// interface is created fresh on every start - its routes go with it - so
+	// remembering them in the process is enough.
+	manageRoutes bool
+	routesMu     sync.Mutex
+	routes       map[string]bool
 
 	closeOnce sync.Once
 	closeErr  error
@@ -80,6 +100,11 @@ func (wg *commonInterface) LoadConfig(config *ConfigFile) error {
 
 	if err := wg.Up(); err != nil {
 		return errors.Wrap(err, "failed to bring interface up")
+	}
+
+	// A config file may bring peers of its own along with it.
+	if err := wg.syncRoutes(); err != nil {
+		return errors.Wrap(err, "failed to set up the routes of the peers")
 	}
 
 	return nil

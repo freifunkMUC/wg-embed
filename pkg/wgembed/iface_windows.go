@@ -20,10 +20,10 @@ type userspaceInterface struct {
 
 func NewWithOpts(opts Options) (WireGuardInterface, error) {
 	logrus.Debug("creating new userspace wireguard-go interface")
-	return newUserspaceInterface(opts.InterfaceName)
+	return newUserspaceInterface(opts)
 }
 
-func newUserspaceInterface(interfaceName string) (WireGuardInterface, error) {
+func newUserspaceInterface(opts Options) (WireGuardInterface, error) {
 	// TODO: https://git.zx2c4.com/wireguard-go/tree/main_windows.go
 	logrus.Println("newUserspaceInterface not implemented for Windows")
 	return &userspaceInterface{}, nil

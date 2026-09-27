@@ -9,7 +9,7 @@ import (
 
 func NewWithOpts(opts Options) (WireGuardInterface, error) {
 	logrus.Debug("creating new userspace wireguard-go interface")
-	return newUserspaceInterface(opts.InterfaceName)
+	return newUserspaceInterface(opts)
 }
 
 func (wg *commonInterface) Up() error {
