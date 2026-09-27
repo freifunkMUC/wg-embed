@@ -18,9 +18,9 @@ type netlinkWireguard struct {
 	netlink.LinkAttrs
 }
 
-func newKernelInterface(interfaceName string) (WireGuardInterface, error) {
+func newKernelInterface(opts Options) (WireGuardInterface, error) {
 	attrs := netlink.NewLinkAttrs()
-	attrs.Name = interfaceName
+	attrs.Name = opts.InterfaceName
 	attrs.MTU = device.DefaultMTU
 	link := &netlinkWireguard{attrs}
 
@@ -38,8 +38,9 @@ func newKernelInterface(interfaceName string) (WireGuardInterface, error) {
 
 	wg := &kernelInterface{
 		commonInterface: commonInterface{
-			client: client,
-			name:   interfaceName,
+			client:       client,
+			name:         opts.InterfaceName,
+			manageRoutes: opts.ManageRoutes,
 		},
 	}
 
