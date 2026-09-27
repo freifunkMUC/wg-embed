@@ -1,9 +1,10 @@
 package wgembed
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -73,7 +74,7 @@ type commonInterface struct {
 func (wg *commonInterface) LoadConfigFile(path string) error {
 	config, err := ReadConfig(path)
 	if err != nil {
-		return errors.Wrap(err, "failed to load config file")
+		return fmt.Errorf("failed to load config file: %w", err)
 	}
 	return wg.LoadConfig(config)
 }
@@ -83,28 +84,28 @@ func (wg *commonInterface) LoadConfigFile(path string) error {
 func (wg *commonInterface) LoadConfig(config *ConfigFile) error {
 	c, err := config.Config()
 	if err != nil {
-		return errors.Wrap(err, "invalid wireguard config")
+		return fmt.Errorf("invalid wireguard config: %w", err)
 	}
 
 	wg.config = config
 
 	if err := wg.client.ConfigureDevice(wg.Name(), *c); err != nil {
-		return errors.Wrap(err, "failed to configure wireguard")
+		return fmt.Errorf("failed to configure wireguard: %w", err)
 	}
 
 	for _, addr := range config.Interface.Address {
 		if err := wg.setIP(addr); err != nil {
-			return errors.Wrap(err, "failed to set interface ip address")
+			return fmt.Errorf("failed to set interface ip address: %w", err)
 		}
 	}
 
 	if err := wg.Up(); err != nil {
-		return errors.Wrap(err, "failed to bring interface up")
+		return fmt.Errorf("failed to bring interface up: %w", err)
 	}
 
 	// A config file may bring peers of its own along with it.
 	if err := wg.syncRoutes(); err != nil {
-		return errors.Wrap(err, "failed to set up the routes of the peers")
+		return fmt.Errorf("failed to set up the routes of the peers: %w", err)
 	}
 
 	return nil

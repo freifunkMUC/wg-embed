@@ -95,8 +95,10 @@ func TestRoutesFor(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := routeStrings(routesFor(prefixes(t, tc.networks...), addresses))
-			if !sameStrings(got, tc.want) && !(len(got) == 0 && len(tc.want) == 0) {
-				t.Errorf("routesFor = %v, want %v", got, tc.want)
+			if len(got) != 0 || len(tc.want) != 0 {
+				if !sameStrings(got, tc.want) {
+					t.Errorf("routesFor = %v, want %v", got, tc.want)
+				}
 			}
 		})
 	}

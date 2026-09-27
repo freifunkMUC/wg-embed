@@ -4,7 +4,7 @@
 package wgembed
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -26,14 +26,14 @@ func newKernelInterface(opts Options) (WireGuardInterface, error) {
 
 	err := netlink.LinkAdd(link)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create wireguard kernel device")
+		return nil, fmt.Errorf("failed to create wireguard kernel device: %w", err)
 	}
 
 	client, err := wgctrl.New()
 	if err != nil {
 		// remove the device just created, or the next start fails on its name
 		_ = netlink.LinkDel(link)
-		return nil, errors.Wrap(err, "failed to create wg client")
+		return nil, fmt.Errorf("failed to create wg client: %w", err)
 	}
 
 	wg := &kernelInterface{

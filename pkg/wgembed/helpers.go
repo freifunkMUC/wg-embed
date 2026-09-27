@@ -1,7 +1,7 @@
 package wgembed
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	_ "golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -15,7 +15,7 @@ type KeyPair struct {
 func NewKeyPair() KeyPair {
 	key, err := wgtypes.GeneratePrivateKey()
 	if err != nil {
-		logrus.Fatal(errors.Wrap(err, "failed to generate key"))
+		logrus.Fatal(fmt.Errorf("failed to generate key: %w", err))
 	}
 	return KeyPair{
 		PrivateKey: key.String(),
