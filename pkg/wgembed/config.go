@@ -2,6 +2,7 @@ package wgembed
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -10,6 +11,10 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"gopkg.in/ini.v1"
 )
+
+// redactedValue stands in for the private key wherever a configuration is
+// rendered as text.
+const redactedValue = "<redacted>"
 
 type ConfigFile struct {
 	Interface IfaceConfig
@@ -40,7 +45,20 @@ func ReadConfig(path string) (*ConfigFile, error) {
 		Peers: []PeerConfig{},
 	}
 
-	bytes, err := os.ReadFile(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read wireguard config file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+
+	// The file holds a private key. Checking the handle rather than the path
+	// describes the file that is actually being read.
+	if info, err := file.Stat(); err == nil && info.Mode().Perm()&0o077 != 0 {
+		logrus.Warnf("%s is readable by other users (mode %04o) although it holds the private key - chmod 600 it",
+			path, info.Mode().Perm())
+	}
+
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read wireguard config file: %w", err)
 	}
@@ -127,10 +145,24 @@ func (c *ConfigFile) Config() (*wgtypes.Config, error) {
 	return c.wgconfig, nil
 }
 
+// String renders the configuration the way a wg-quick file looks, with the
+// private key left out: this is what ends up in a log line or a %v, and the
+// key has no business being there. It used to write into a nil *ini.File,
+// which panicked before it could get that far.
 func (c *ConfigFile) String() string {
-	var f *ini.File
-	if err := ini.ReflectFrom(f, c); err != nil {
-		logrus.Fatal(err)
+	redacted := *c
+	if redacted.Interface.PrivateKey != "" {
+		redacted.Interface.PrivateKey = redactedValue
 	}
-	return strings.Join(f.SectionStrings(), "\n\n")
+
+	f := ini.Empty(ini.LoadOptions{AllowNonUniqueSections: true})
+	if err := ini.ReflectFrom(f, &redacted); err != nil {
+		return fmt.Sprintf("<wireguard config that cannot be rendered: %v>", err)
+	}
+
+	var out strings.Builder
+	if _, err := f.WriteTo(&out); err != nil {
+		return fmt.Sprintf("<wireguard config that cannot be rendered: %v>", err)
+	}
+	return out.String()
 }

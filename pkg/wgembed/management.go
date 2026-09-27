@@ -23,10 +23,15 @@ func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addres
 	if len(presharedKey) != 0 {
 		psk, err := wgtypes.ParseKey(presharedKey)
 		if err != nil {
-			logrus.WithError(err).Warnf("ignoring bad pre-shared key: %v", presharedKey)
-		} else {
-			wgPresharedKey = &psk
+			// The key itself is never part of the message: it is secret, and
+			// a log line travels further than this process. Nor is it ignored
+			// any more - the peer would end up without the pre-shared key the
+			// caller asked for, and the client, which has it, could never
+			// complete a handshake. wgtypes reports the size or the position
+			// of the bad character, never the value.
+			return fmt.Errorf("bad pre-shared key for peer %s: %w", publicKey, err)
 		}
+		wgPresharedKey = &psk
 	}
 
 	parsedAddresses := make([]net.IPNet, 0, len(addressCIDR))
