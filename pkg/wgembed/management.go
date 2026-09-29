@@ -1,7 +1,6 @@
 package wgembed
 
 import (
-	"errors"
 	"fmt"
 	"net"
 
@@ -144,15 +143,15 @@ func (wg *commonInterface) Port() (int, error) {
 
 func (wg *commonInterface) Ping() error {
 	if _, err := wg.ListPeers(); err != nil {
-		return errors.New("failed to ping wireguard")
+		return fmt.Errorf("failed to ping wireguard: %w", err)
 	}
 	return nil
 }
 
+// configure applies one change to the interface. It needs no lock of its own:
+// wgctrl passes the request to a netlink connection, and those are safe for
+// concurrent use, so two changes at once are two independent requests.
 func (wg *commonInterface) configure(cb func(*wgtypes.Config) error) error {
-	// TODO: concurrency
-	// s.lock.Lock()
-	// defer s.lock.Unlock()
 	next := wgtypes.Config{}
 	if err := cb(&next); err != nil {
 		return fmt.Errorf("failed to get next wireguard config: %w", err)

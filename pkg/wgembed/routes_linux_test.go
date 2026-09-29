@@ -5,6 +5,7 @@ package wgembed
 import (
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -144,5 +145,71 @@ func TestManageRoutesIsOptIn(t *testing.T) {
 
 	if routed := routedNetworks(t, name); routed["192.168.78.0/24"] {
 		t.Errorf("a route was added although ManageRoutes is off: %v", routed)
+	}
+}
+
+// Peers change concurrently - two admins, or events from several replicas.
+// syncRoutes used to read the peers before taking its lock, so the pass that
+// read first could remove the route the other one had just added.
+//
+// This does not reproduce that ordering reliably: the pass that takes the lock
+// last usually read last as well, and then puts everything back. It is here as
+// the only test that changes peers concurrently at all, and it would catch a
+// sync that drops routes outright.
+func TestManageRoutesSurvivesConcurrentPeers(t *testing.T) {
+	requireNetAdmin(t)
+
+	name := testInterfaceName(t)
+	wg, err := NewWithOpts(Options{InterfaceName: name, AllowKernelModule: true, ManageRoutes: true})
+	if err != nil {
+		t.Fatalf("NewWithOpts: %v", err)
+	}
+	t.Cleanup(func() { _ = wg.Close() })
+
+	key, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := 51820 + int(time.Now().UnixNano()%1000)
+	if err := wg.LoadConfig(&ConfigFile{Interface: IfaceConfig{
+		PrivateKey: key.String(),
+		ListenPort: &port,
+		Address:    []string{"10.125.0.1/24"},
+	}}); err != nil {
+		t.Fatalf("LoadConfig: %v", err)
+	}
+
+	const peers = 12
+	var wgGroup sync.WaitGroup
+	errs := make(chan error, peers)
+	for i := 0; i < peers; i++ {
+		wgGroup.Add(1)
+		go func(i int) {
+			defer wgGroup.Done()
+			peer, err := wgtypes.GeneratePrivateKey()
+			if err != nil {
+				errs <- err
+				return
+			}
+			errs <- wg.AddPeer(peer.PublicKey().String(), "", []string{
+				fmt.Sprintf("10.125.0.%d/32", i+2),
+				fmt.Sprintf("192.168.%d.0/24", 100+i),
+			})
+		}(i)
+	}
+	wgGroup.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("AddPeer: %v", err)
+		}
+	}
+
+	routed := routedNetworks(t, name)
+	for i := 0; i < peers; i++ {
+		network := fmt.Sprintf("192.168.%d.0/24", 100+i)
+		if !routed[network] {
+			t.Errorf("%s is not routed although its peer was added: %v", network, routed)
+		}
 	}
 }
