@@ -1,0 +1,36 @@
+name: "Typos"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches:
+      - master
+  schedule:
+    - cron: "45 9 * * 1" # every Monday at 09:45 UTC
+
+permissions:
+  contents: read # needed to check out the code
+
+jobs:
+  run:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Cache Typos
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/typos
+          key: typos-${{ runner.os }}-${{ hashFiles('.typos.toml') }}
+          restore-keys: |
+            typos-${{ runner.os }}-
+
+      - name: Run Typos with custom config
+        uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
+        with:
+          config: ./.typos.toml

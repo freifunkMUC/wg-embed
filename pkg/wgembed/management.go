@@ -12,7 +12,7 @@ import (
 // AddPeer adds a new peer to the interface.
 // The subnet sizes in addressCIDR should be /32 for IPv4 and /128 for IPv6,
 // as the whole subnet will be added to AllowedIPs for this device.
-// The presharedKey is optinal and can be omitted with nil
+// The presharedKey is optional and can be omitted with nil
 func (wg *commonInterface) AddPeer(publicKey string, presharedKey string, addressCIDR []string) error {
 	wgPublicKey, err := wgtypes.ParseKey(publicKey)
 	if err != nil {
