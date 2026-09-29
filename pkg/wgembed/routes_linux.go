@@ -22,6 +22,13 @@ func (wg *commonInterface) syncRoutes() error {
 		return nil
 	}
 
+	// Everything this reads has to be read under the lock, the peers above
+	// all. Reading them first and locking afterwards let two peer changes
+	// overtake each other: the one that read before the other's peer existed
+	// would then remove the route that other one had just added.
+	wg.routesMu.Lock()
+	defer wg.routesMu.Unlock()
+
 	link, err := netlink.LinkByName(wg.Name())
 	if err != nil {
 		return fmt.Errorf("failed to find the wireguard interface: %w", err)
@@ -39,8 +46,6 @@ func (wg *commonInterface) syncRoutes() error {
 
 	wanted := routesFor(peerNetworks(peers), addresses)
 
-	wg.routesMu.Lock()
-	defer wg.routesMu.Unlock()
 	if wg.routes == nil {
 		wg.routes = map[string]bool{}
 	}
