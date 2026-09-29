@@ -1,0 +1,6 @@
+[files]
+extend-exclude = ["go.sum", "go.mod"]
+
+[default.extend-words]
+# the "MUC" of freifunkMUC is the airport code of Munich
+MUC = "MUC"

@@ -1,0 +1,11 @@
+title = "Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "WireGuard keys in the test fixtures: generated for the tests, they protect nothing"
+paths = [
+  '''pkg/wgembed/config_test\.go''',
+  '''pkg/wgembed/testdata/.*\.conf''',
+]

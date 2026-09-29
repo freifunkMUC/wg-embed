@@ -118,7 +118,7 @@ func (wg *commonInterface) Config() *ConfigFile {
 }
 
 // Device returns the wgtypes Device, this type contains
-// runtime infomation about the wireguard interface
+// runtime information about the wireguard interface
 func (wg *commonInterface) Device() (*wgtypes.Device, error) {
 	return wg.client.Device(wg.Name())
 }
