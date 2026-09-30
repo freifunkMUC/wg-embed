@@ -7,6 +7,12 @@ Uses the Go userspace implementation of WireGuard by default, and optionally the
 Supported OSes:
   - Linux
 
+macOS builds and creates a userspace interface, but bringing it up and giving it
+an address are no-ops there, so it is not a working tunnel without help from
+outside this package. On Windows nothing is implemented: `New` and `NewWithOpts`
+return an error wrapping `ErrUnsupportedPlatform`, rather than an interface that
+would take the process down on first use.
+
 ## Interface names
 
 `NewWithOpts` refuses a name that is already taken and returns an error wrapping

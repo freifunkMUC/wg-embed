@@ -14,6 +14,11 @@ import (
 // run that was killed before it could remove its interface.
 var ErrInterfaceExists = errors.New("network interface already exists")
 
+// ErrUnsupportedPlatform is returned by New and NewWithOpts on a platform this
+// package has no interface implementation for. Callers get it instead of an
+// interface that would panic the moment they used it.
+var ErrUnsupportedPlatform = errors.New("wg-embed does not support this platform")
+
 type WireGuardInterface interface {
 	LoadConfig(config *ConfigFile) error
 	AddPeer(publicKey string, presharedKey string, addressCIDR []string) error
