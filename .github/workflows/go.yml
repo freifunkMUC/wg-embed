@@ -50,3 +50,26 @@ jobs:
           -e WGEMBED_TEST_NETADMIN=1 -e GOTOOLCHAIN=local \
           golang:${{ matrix.go }}-bookworm \
           go test -race -v ./...
+
+  # The other platforms were only ever compiled here, never run - which is how
+  # a constructor that handed back an unusable interface went unnoticed. These
+  # create no network interfaces; the tests that need one skip themselves.
+  other-platforms:
+    strategy:
+      matrix:
+        os: [ windows-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version: '1.27'
+        cache: true
+
+    # Without -race: it needs a C toolchain on these runners, and the shared
+    # code is race-tested on Linux already. What is wanted here is that the
+    # platform's own files run at all.
+    - name: Test
+      run: go test ./...

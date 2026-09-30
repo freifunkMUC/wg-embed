@@ -3,6 +3,7 @@ package wgembed
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -100,6 +101,12 @@ func TestReadConfigWarnsAboutAReadableFile(t *testing.T) {
 		{"the group", 0o640, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			if runtime.GOOS == "windows" {
+				// chmod there sets the read-only attribute and nothing else,
+				// so every file reads back as 0666 - see readableByOthers
+				t.Skip("file modes do not say who may read a file on Windows")
+			}
+
 			hook := logrustest.NewGlobal()
 			defer hook.Reset()
 
