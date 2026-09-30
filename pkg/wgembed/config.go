@@ -53,7 +53,7 @@ func ReadConfig(path string) (*ConfigFile, error) {
 
 	// The file holds a private key. Checking the handle rather than the path
 	// describes the file that is actually being read.
-	if info, err := file.Stat(); err == nil && info.Mode().Perm()&0o077 != 0 {
+	if info, err := file.Stat(); err == nil && readableByOthers(info) {
 		logrus.Warnf("%s is readable by other users (mode %04o) although it holds the private key - chmod 600 it",
 			path, info.Mode().Perm())
 	}
